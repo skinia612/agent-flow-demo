@@ -3,100 +3,477 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能体流程编排 Demo</title>
+<title>智能体流程编排 Demo · 调教增强版</title>
 <style>
-:root{--bg:#070b14;--panel:#0d1424;--border:#1e2a45;--glow:#00f0ff;--text:#e2e8f0;--muted:#94a3b8;--success:#34d399;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;background:radial-gradient(ellipse at top,#0f172a 0%,var(--bg) 60%);color:var(--text);min-height:100vh;}
-.app{display:flex;height:100vh;gap:16px;padding:16px;}
-.left,.right{background:rgba(13,20,36,.88);border:1px solid var(--border);border-radius:16px;backdrop-filter:blur(12px);padding:20px;overflow-y:auto;}
-.left{flex:1.55;}.right{flex:.85;min-width:340px;}
-h1{font-size:1.45rem;font-weight:600;margin-bottom:8px;background:linear-gradient(90deg,var(--glow),#7dd3fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.subtitle{font-size:.85rem;color:var(--muted);margin-bottom:18px;}
-h2{font-size:1.05rem;margin:0 0 12px;color:var(--glow);display:flex;align-items:center;gap:8px;}
-h2::before{content:"";width:8px;height:8px;background:var(--glow);border-radius:50%;box-shadow:0 0 8px var(--glow);}
-.process{background:rgba(15,23,42,.65);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:18px;}
-.process.expanded{border-color:rgba(0,240,255,.5);box-shadow:0 0 24px rgba(0,240,255,.12);}
-.slots{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
-.slot{flex:1;min-width:130px;height:150px;border:2px dashed rgba(0,240,255,.35);border-radius:12px;background:rgba(0,240,255,.03);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding-top:22px;}
-.slot.hover{border-color:var(--glow);background:rgba(0,240,255,.08);box-shadow:0 0 18px rgba(0,240,255,.25);transform:scale(1.02);}
-.slot.occupied{border-style:solid;border-color:var(--success);}
-.slot-label{position:absolute;top:6px;left:6px;font-size:.7rem;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:999px;color:var(--glow);}
-.start-btn,.reset-btn{padding:7px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:600;}
-.start-btn{background:linear-gradient(135deg,#06b6d4,#3b82f6);color:#fff;}
-.start-btn:disabled{opacity:.4;cursor:not-allowed;}
-.reset-btn{background:transparent;border:1px solid var(--border);color:var(--muted);margin-left:8px;}
-.chat-window{display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:12px;}
-.process.expanded .chat-window{display:block;}
-.messages{max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
-.msg{display:flex;gap:10px;animation:fadeIn .4s;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
-.msg-avatar{width:36px;height:36px;flex-shrink:0;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-.msg-avatar .robot{width:32px;height:32px;}
-.msg-text{background:rgba(30,41,59,.7);border-radius:10px;padding:8px 12px;font-size:.88rem;}
-.agents{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;}
-.agent{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px;cursor:grab;text-align:center;}
-.agent:hover{transform:translateY(-3px);border-color:rgba(0,240,255,.4);}
-.agent .robot{width:64px;height:64px;margin:0 auto;}
-.agent-title{font-size:.78rem;font-weight:600;margin-top:6px;}
-.agent-skill{font-size:.68rem;color:var(--muted);}
-.struggling .robot{animation:struggle .35s infinite;}
-@keyframes struggle{0%,100%{transform:rotate(-12deg) translateY(-3px);}50%{transform:rotate(8deg) translateY(2px);}}
-.working .robot{animation:work .55s infinite;}
-@keyframes work{0%,100%{transform:none;}50%{transform:translateY(-4px);}}
-.float-drag{position:fixed;pointer-events:none;z-index:9999;}
+  :root {
+    --bg: #070b14;
+    --panel: #0d1424;
+    --border: #1e2a45;
+    --glow: #00f0ff;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --success: #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    background: radial-gradient(ellipse at top, #0f172a 0%, var(--bg) 60%);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .app { display: flex; height: 100vh; gap: 16px; padding: 16px; }
+  .left, .right {
+    background: rgba(13, 20, 36, 0.88);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .left { flex: 1.55; }
+  .right { flex: 0.85; min-width: 360px; }
+  h1 {
+    font-size: 1.45rem; font-weight: 600; margin-bottom: 8px;
+    background: linear-gradient(90deg, var(--glow), #7dd3fc);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .subtitle { font-size: 0.85rem; color: var(--muted); margin-bottom: 18px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; color: var(--glow); display: flex; align-items: center; gap: 8px; }
+  h2::before { content: ""; width: 8px; height: 8px; background: var(--glow); border-radius: 50%; box-shadow: 0 0 8px var(--glow); }
+  .process { background: rgba(15, 23, 42, 0.65); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 18px; }
+  .process.expanded { border-color: rgba(0, 240, 255, 0.5); box-shadow: 0 0 24px rgba(0, 240, 255, 0.12); }
+  .slots { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .slot {
+    flex: 1; min-width: 130px; height: 150px; border: 2px dashed rgba(0, 240, 255, 0.35);
+    border-radius: 12px; background: rgba(0, 240, 255, 0.03);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; padding-top: 22px;
+  }
+  .slot.hover { border-color: var(--glow); background: rgba(0, 240, 255, 0.08); box-shadow: 0 0 18px rgba(0, 240, 255, 0.25); transform: scale(1.02); }
+  .slot.occupied { border-style: solid; border-color: var(--success); }
+  .slot-label { position: absolute; top: 6px; left: 6px; font-size: 0.7rem; background: rgba(0,0,0,0.55); padding: 2px 7px; border-radius: 999px; color: var(--glow); }
+  .start-btn, .reset-btn, .tune-btn {
+    padding: 7px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+  }
+  .start-btn { background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; }
+  .start-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .reset-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); margin-left: 8px; }
+  .agent {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 10px 8px 8px; cursor: grab; text-align: center; position: relative;
+    min-height: 180px;
+  }
+  .agent:hover { transform: translateY(-3px); border-color: rgba(0,240,255,0.4); }
+  .agent .robot { width: 64px; height: 64px; margin: 0 auto; pointer-events: none; }
+  .agent-title { font-size: 0.78rem; font-weight: 600; margin-top: 6px; pointer-events: none; }
+  .agent-skill { font-size: 0.68rem; color: var(--muted); margin-top: 2px; pointer-events: none; }
+  .tune-btn {
+    background: rgba(168, 85, 247, 0.25); color: #c084fc; border: 1px solid #a855f7;
+    margin-top: 8px; font-size: 0.75rem; padding: 5px 10px; width: 100%; border-radius: 6px;
+    cursor: pointer; font-weight: 600; position: relative; z-index: 2;
+  }
+  .tune-btn:hover { background: rgba(168, 85, 247, 0.45); }
+  .chat-window { display: none; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+  .process.expanded .chat-window { display: block; }
+  .messages { max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .msg { display: flex; gap: 10px; animation: fadeIn 0.4s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .msg-avatar { width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .msg-avatar .robot { width: 32px; height: 32px; }
+  .msg-text { background: rgba(30, 41, 59, 0.7); border-radius: 10px; padding: 8px 12px; font-size: 0.88rem; white-space: pre-wrap; }
+  .agents { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .struggling .robot { animation: struggle 0.35s infinite; }
+  @keyframes struggle { 0%,100%{transform:rotate(-12deg) translateY(-3px);} 50%{transform:rotate(8deg) translateY(2px);} }
+  .working .robot { animation: work 0.55s infinite; }
+  @keyframes work { 0%,100%{transform:none;} 50%{transform:translateY(-4px);} }
+  .float-drag { position: fixed; pointer-events: none; z-index: 9999; }
+  .tune-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    z-index: 2000; align-items: center; justify-content: center; padding: 20px;
+  }
+  .tune-overlay.active { display: flex; }
+  .tune-panel {
+    background: #0d1424; border: 1px solid var(--border); border-radius: 16px;
+    width: min(960px, 100%); max-height: 90vh; display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .tune-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .tune-header h3 { color: var(--glow); font-size: 1.1rem; }
+  .close-tune { background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; }
+  .tune-body { display: flex; flex: 1; overflow: hidden; }
+  .tune-left { width: 320px; border-right: 1px solid var(--border); padding: 16px; overflow-y: auto; }
+  .tune-right { flex: 1; display: flex; flex-direction: column; }
+  .section-title { font-size: 0.8rem; color: var(--muted); margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  textarea.prompt {
+    width: 100%; height: 120px; background: #0a0f1c; border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); padding: 10px; font-size: 0.85rem; resize: vertical;
+  }
+  .kb-list { max-height: 140px; overflow-y: auto; }
+  .kb-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.85rem; }
+  .kb-item input { accent-color: var(--glow); }
+  .upload-area {
+    border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center;
+    font-size: 0.8rem; color: var(--muted); cursor: pointer; margin-top: 8px;
+  }
+  .upload-area:hover { border-color: var(--glow); color: var(--glow); }
+  .tune-chat { flex: 1; display: flex; flex-direction: column; padding: 16px; overflow: hidden; }
+  .tune-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+  .tune-input-row { display: flex; gap: 8px; }
+  .tune-input-row input {
+    flex: 1; background: #0a0f1c; border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; color: var(--text); font-size: 0.9rem;
+  }
+  .tune-input-row button { background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; border: none; border-radius: 8px; padding: 0 18px; cursor: pointer; }
+  .save-btn { background: #34d399; color: #0f172a; border: none; border-radius: 8px; padding: 8px 16px; margin-top: 12px; cursor: pointer; font-weight: 600; width: 100%; }
+  .hint { font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; }
 </style>
 </head>
 <body>
 <div class="app">
-<div class="left">
-<h1>⚡ 智能体流程编排</h1>
-<p class="subtitle">拖拽右侧智能体到坑位 → 启动后展开完整协作对话窗口</p>
-<div class="process" data-process="reflection">
-<h3>反思流程</h3>
-<div class="slots">
-<div class="slot" data-role="工作者"><span class="slot-label">工作者</span></div>
-<div class="slot" data-role="审核者"><span class="slot-label">审核者</span></div>
+  <div class="left">
+    <h1>⚡ 智能体流程编排</h1>
+    <p class="subtitle">拖拽智能体到坑位 → 启动协作对话；右侧每个智能体可单独「调教」</p>
+    <div class="process" data-process="reflection">
+      <h3>反思流程</h3>
+      <div class="slots">
+        <div class="slot" data-role="工作者"><span class="slot-label">工作者</span></div>
+        <div class="slot" data-role="审核者"><span class="slot-label">审核者</span></div>
+      </div>
+      <button class="start-btn" disabled>启动协作</button>
+      <button class="reset-btn">重置</button>
+      <div class="status"></div>
+      <div class="chat-window">
+        <div class="chat-header">多智能体协作会话 · 反思流程</div>
+        <div class="messages"></div>
+      </div>
+    </div>
+    <div class="process" data-process="roleplay">
+      <h3>角色扮演流程</h3>
+      <div class="slots">
+        <div class="slot" data-role="规划者"><span class="slot-label">规划者</span></div>
+        <div class="slot" data-role="执行者"><span class="slot-label">执行者</span></div>
+        <div class="slot" data-role="审核者"><span class="slot-label">审核者</span></div>
+      </div>
+      <button class="start-btn" disabled>启动协作</button>
+      <button class="reset-btn">重置</button>
+      <div class="status"></div>
+      <div class="chat-window">
+        <div class="chat-header">多智能体协作会话 · 角色扮演流程</div>
+        <div class="messages"></div>
+      </div>
+    </div>
+  </div>
+  <div class="right">
+    <h2>智能体池</h2>
+    <p class="hint">点击「调教」打开自然语言调试页面</p>
+    <div class="agents" id="agentPool"></div>
+  </div>
 </div>
-<button class="start-btn" disabled>启动协作</button>
-<button class="reset-btn">重置</button>
-<div class="status"></div>
-<div class="chat-window"><div class="chat-header">多智能体协作会话</div><div class="messages"></div></div>
-</div>
-<div class="process" data-process="roleplay">
-<h3>角色扮演流程</h3>
-<div class="slots">
-<div class="slot" data-role="规划者"><span class="slot-label">规划者</span></div>
-<div class="slot" data-role="执行者"><span class="slot-label">执行者</span></div>
-<div class="slot" data-role="审核者"><span class="slot-label">审核者</span></div>
-</div>
-<button class="start-btn" disabled>启动协作</button>
-<button class="reset-btn">重置</button>
-<div class="status"></div>
-<div class="chat-window"><div class="chat-header">多智能体协作会话</div><div class="messages"></div></div>
-</div>
-</div>
-<div class="right">
-<h2>智能体池</h2>
-<p class="hint">模型 + 专业 Skill</p>
-<div class="agents" id="agentPool"></div>
-</div>
+<div class="tune-overlay" id="tuneOverlay">
+  <div class="tune-panel">
+    <div class="tune-header">
+      <h3 id="tuneTitle">调教智能体</h3>
+      <button class="close-tune" onclick="closeTune()">×</button>
+    </div>
+    <div class="tune-body">
+      <div class="tune-left">
+        <div class="section-title">系统提示词 / 人格</div>
+        <textarea class="prompt" id="systemPrompt" placeholder="用自然语言描述这个智能体的行为、风格、约束..."></textarea>
+        <div class="section-title">知识库文件</div>
+        <div class="kb-list" id="kbList"></div>
+        <div class="section-title">上传参考文件</div>
+        <div class="upload-area" id="uploadArea">点击或拖拽上传文本/Markdown 文件</div>
+        <input type="file" id="fileInput" accept=".txt,.md,.json,.csv" style="display:none">
+        <div id="uploadedFiles" style="font-size:0.75rem;margin-top:8px;color:#94a3b8;"></div>
+        <button class="save-btn" onclick="saveTune()">保存调教结果</button>
+      </div>
+      <div class="tune-right">
+        <div class="tune-chat">
+          <div class="tune-messages" id="tuneMessages"></div>
+          <div class="tune-input-row">
+            <input id="tuneInput" placeholder="用自然语言调试这个智能体..." onkeydown="if(event.key==='Enter')sendTuneMsg()">
+            <button onclick="sendTuneMsg()">发送</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <script>
-const AGENTS=[{id:"kimi",name:"Kimi K3",skill:"营销专家 Skill",color:"#ff6b9d",accent:"#ff8fb8"},{id:"glm",name:"GLM 5.4",skill:"财务专家 Skill",color:"#4ecdc4",accent:"#7ee8e0"},{id:"claude",name:"Claude 4",skill:"产品设计 Skill",color:"#ffe66d",accent:"#fff3a3"},{id:"gpt",name:"GPT-5",skill:"技术架构 Skill",color:"#86efac",accent:"#bbf7d0"},{id:"qwen",name:"Qwen 2.5",skill:"内容创作 Skill",color:"#c084fc",accent:"#d8b4fe"},{id:"ds",name:"DeepSeek V3",skill:"数据分析 Skill",color:"#fb923c",accent:"#fdba74"},{id:"gemini",name:"Gemini 2.5",skill:"用户研究 Skill",color:"#60a5fa",accent:"#93c5fd"},{id:"llama",name:"Llama 4",skill:"合规风控 Skill",color:"#f87171",accent:"#fca5a5"}];
-function createRobotSVG(c,a){return `<svg class="robot" viewBox="0 0 72 72"><ellipse cx="36" cy="42" rx="22" ry="18" fill="${c}"/><circle cx="36" cy="28" r="16" fill="${c}"/><ellipse cx="30" cy="26" rx="4" ry="5" fill="#1e293b"/><ellipse cx="42" cy="26" rx="4" ry="5" fill="#1e293b"/><circle cx="31" cy="25" r="1.5" fill="#fff"/><circle cx="43" cy="25" r="1.5" fill="#fff"/><path d="M30 34 Q36 38 42 34" fill="none" stroke="#1e293b" stroke-width="1.5"/></svg>`;}
-const pool=document.getElementById("agentPool");
-AGENTS.forEach(a=>{const el=document.createElement("div");el.className="agent";el.dataset.id=a.id;el.dataset.name=a.name;el.dataset.skill=a.skill;el.dataset.color=a.color;el.innerHTML=createRobotSVG(a.color,a.accent)+`<div class="agent-title">${a.name}</div><div class="agent-skill">${a.skill}</div>`;pool.appendChild(el);});
-let dragEl,dragClone,ox,oy;
-document.addEventListener("mousedown",e=>{const ag=e.target.closest(".agent");if(!ag||ag.closest(".slot"))return;e.preventDefault();dragEl=ag;const r=ag.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;dragClone=ag.cloneNode(true);dragClone.classList.add("float-drag","struggling");dragClone.style.left=(e.clientX-ox)+"px";dragClone.style.top=(e.clientY-oy)+"px";document.body.appendChild(dragClone);ag.style.opacity=".35";});
-document.addEventListener("mousemove",e=>{if(!dragClone)return;dragClone.style.left=(e.clientX-ox)+"px";dragClone.style.top=(e.clientY-oy)+"px";document.querySelectorAll(".slot").forEach(s=>s.classList.remove("hover"));const s=document.elementFromPoint(e.clientX,e.clientY)?.closest(".slot");if(s&&!s.querySelector(".agent"))s.classList.add("hover");});
-document.addEventListener("mouseup",e=>{if(!dragClone)return;const s=document.elementFromPoint(e.clientX,e.clientY)?.closest(".slot");if(s&&!s.querySelector(".agent")){const p=dragEl.cloneNode(true);p.classList.remove("float-drag","struggling");p.style.opacity="1";p.querySelector(".robot").style.width="56px";const t=p.querySelector(".agent-title");if(t)t.textContent=dragEl.dataset.name.split(" ")[0];const sk=p.querySelector(".agent-skill");if(sk)sk.style.display="none";s.appendChild(p);s.classList.add("occupied");dragEl.remove();const info=AGENTS.find(x=>x.id===dragEl.dataset.id);if(info){const n=document.createElement("div");n.className="agent";Object.assign(n.dataset,{id:info.id,name:info.name,skill:info.skill,color:info.color});n.innerHTML=createRobotSVG(info.color,info.accent)+`<div class="agent-title">${info.name}</div><div class="agent-skill">${info.skill}</div>`;pool.appendChild(n);}}else{dragEl.style.opacity="1";}document.querySelectorAll(".slot").forEach(s=>s.classList.remove("hover"));dragClone.remove();dragClone=null;dragEl=null;updateStartButtons();});
-function updateStartButtons(){document.querySelectorAll(".process").forEach(p=>{const f=[...p.querySelectorAll(".slot")].every(s=>s.querySelector(".agent"));p.querySelector(".start-btn").disabled=!f;});}
-function getSlotAgents(proc){return [...proc.querySelectorAll(".slot")].map(slot=>{const ag=slot.querySelector(".agent");return ag?{role:slot.dataset.role,name:ag.dataset.name,skill:ag.dataset.skill,color:ag.dataset.color,id:ag.dataset.id,svg:ag.querySelector(".robot")?.outerHTML||""}:null;}).filter(Boolean);}
-function typeMessages(el,msgs,d=1000){let i=0;function n(){if(i>=msgs.length)return;const m=msgs[i++];const div=document.createElement("div");div.className="msg";div.innerHTML=`<div class="msg-avatar">${m.svg}</div><div class="msg-body"><div class="msg-meta"><strong>${m.name}</strong> · ${m.skill}</div><div class="msg-text">${m.text}</div></div>`;el.appendChild(div);el.scrollTop=el.scrollHeight;setTimeout(n,d);}n();}
-const DIALOGUES={reflection:(ags)=>{const w=ags.find(a=>a.role==="工作者")||ags[0],r=ags.find(a=>a.role==="审核者")||ags[1];return[{...w,text:"已完成营销方案初稿，请审核。"},{...r,text:`从${r.skill}看，预算偏高，建议压缩。`},{...w,text:"已调整，请确认。"},{...r,text:"审核通过。"}];},roleplay:(ags)=>{const p=ags.find(a=>a.role==="规划者")||ags[0],e=ags.find(a=>a.role==="执行者")||ags[1],r=ags.find(a=>a.role==="审核者")||ags[2];return[{...p,text:"目标已明确，请评估可行性。"},{...e,text:"技术可行，预计12人日。"},{...r,text:"建议补充验收标准。"},{...p,text:"已补充。"}];}};
-document.querySelectorAll(".start-btn").forEach(b=>b.addEventListener("click",()=>{const proc=b.closest(".process");const ags=getSlotAgents(proc);if(!ags.length)return;proc.querySelectorAll(".slot .agent").forEach(a=>a.classList.add("working"));proc.classList.add("expanded");const m=proc.querySelector(".messages");m.innerHTML="";proc.querySelector(".status").textContent="协作已启动";b.textContent="运行中";b.disabled=true;typeMessages(m,DIALOGUES[proc.dataset.process](ags));}));
-document.querySelectorAll(".reset-btn").forEach(b=>b.addEventListener("click",()=>{const proc=b.closest(".process");proc.querySelectorAll(".slot .agent").forEach(a=>a.remove());proc.querySelectorAll(".slot").forEach(s=>s.classList.remove("occupied"));proc.classList.remove("expanded");proc.querySelector(".messages").innerHTML="";proc.querySelector(".status").textContent="";const s=proc.querySelector(".start-btn");s.textContent="启动协作";s.disabled=true;updateStartButtons();}));
+const AGENTS = [
+  { id: "kimi", name: "Kimi K3", skill: "营销专家 Skill", color: "#ff6b9d", accent: "#ff8fb8", prompt: "你是一名资深营销专家，擅长品牌定位、内容策略与增长实验。回答简洁有力，注重数据与用户洞察。" },
+  { id: "glm", name: "GLM 5.4", skill: "财务专家 Skill", color: "#4ecdc4", accent: "#7ee8e0", prompt: "你是一名严谨的财务专家，精通预算、ROI 测算与合规审查。回答准确、保守，突出风险点。" },
+  { id: "claude", name: "Claude 4", skill: "产品设计 Skill", color: "#ffe66d", accent: "#fff3a3", prompt: "你是一名产品设计师，关注用户体验与信息架构。回答结构化，常给出多个方案对比。" },
+  { id: "gpt", name: "GPT-5", skill: "技术架构 Skill", color: "#86efac", accent: "#bbf7d0", prompt: "你是一名技术架构师，擅长系统设计与可行性评估。回答注重边界条件与扩展性。" },
+  { id: "qwen", name: "Qwen 2.5", skill: "内容创作 Skill", color: "#c084fc", accent: "#d8b4fe", prompt: "你是一名内容创作者，文风生动、有感染力。擅长把复杂信息转成易懂故事。" },
+  { id: "ds", name: "DeepSeek V3", skill: "数据分析 Skill", color: "#fb923c", accent: "#fdba74", prompt: "你是一名数据分析师，善于从数据中发现模式并给出可执行建议。" },
+  { id: "gemini", name: "Gemini 2.5", skill: "用户研究 Skill", color: "#60a5fa", accent: "#93c5fd", prompt: "你是一名用户研究员，关注真实用户声音与场景洞察。" },
+  { id: "llama", name: "Llama 4", skill: "合规风控 Skill", color: "#f87171", accent: "#fca5a5", prompt: "你是一名合规风控专家，优先识别风险与法规要求。" },
+];
+const KB_FILES = [
+  "品牌调性指南.md", "Q3 营销预算表.xlsx", "用户访谈纪要.pdf",
+  "产品需求文档.md", "技术架构图.png", "合规检查清单.txt",
+  "竞品分析报告.md", "ROI 测算模板.xlsx"
+];
+let currentTuneAgent = null;
+const agentMemories = {};
+function createRobotSVG(color, accent) {
+  return `<svg class="robot" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="36" cy="42" rx="22" ry="18" fill="${color}"/>
+    <circle cx="36" cy="28" r="16" fill="${color}"/>
+    <ellipse cx="30" cy="26" rx="4" ry="5" fill="#1e293b"/>
+    <ellipse cx="42" cy="26" rx="4" ry="5" fill="#1e293b"/>
+    <circle cx="31" cy="25" r="1.5" fill="white"/>
+    <circle cx="43" cy="25" r="1.5" fill="white"/>
+    <path d="M30 34 Q36 38 42 34" fill="none" stroke="#1e293b" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`;
+}
+const pool = document.getElementById("agentPool");
+AGENTS.forEach(a => {
+  agentMemories[a.id] = { prompt: a.prompt, kb: [], files: [] };
+  const el = document.createElement("div");
+  el.className = "agent";
+  el.dataset.id = a.id;
+  el.dataset.name = a.name;
+  el.dataset.skill = a.skill;
+  el.dataset.color = a.color;
+  el.innerHTML = createRobotSVG(a.color, a.accent) +
+    `<div class="agent-title">${a.name}</div>
+     <div class="agent-skill">${a.skill}</div>
+     <button class="tune-btn" onclick="event.stopPropagation(); openTune('${a.id}')">调教</button>`;
+  pool.appendChild(el);
+});
+function openTune(id) {
+  const agent = AGENTS.find(a => a.id === id);
+  if (!agent) return;
+  currentTuneAgent = agent;
+  document.getElementById("tuneTitle").textContent = `调教 · ${agent.name}`;
+  document.getElementById("systemPrompt").value = agentMemories[id].prompt;
+  renderKB();
+  document.getElementById("uploadedFiles").innerHTML = agentMemories[id].files.map(f => `📄 ${f}`).join("<br>") || "";
+  document.getElementById("tuneMessages").innerHTML = `<div class="msg"><div class="msg-text">你好，我是 ${agent.name}（${agent.skill}）。你可以用自然语言告诉我如何调整行为，或上传文件让我参考。</div></div>`;
+  document.getElementById("tuneOverlay").classList.add("active");
+}
+function closeTune() {
+  document.getElementById("tuneOverlay").classList.remove("active");
+  currentTuneAgent = null;
+}
+function renderKB() {
+  const list = document.getElementById("kbList");
+  list.innerHTML = "";
+  KB_FILES.forEach(f => {
+    const checked = agentMemories[currentTuneAgent.id].kb.includes(f) ? "checked" : "";
+    list.innerHTML += `<label class="kb-item"><input type="checkbox" value="${f}" ${checked}> ${f}</label>`;
+  });
+}
+document.getElementById("uploadArea").onclick = () => document.getElementById("fileInput").click();
+document.getElementById("fileInput").onchange = e => {
+  const file = e.target.files[0];
+  if (!file || !currentTuneAgent) return;
+  agentMemories[currentTuneAgent.id].files.push(file.name);
+  document.getElementById("uploadedFiles").innerHTML += `📄 ${file.name}<br>`;
+  addTuneMsg("system", `已接收参考文件「${file.name}」，我会在后续回答中参考其内容。`);
+};
+function addTuneMsg(role, text) {
+  const el = document.createElement("div");
+  el.className = "msg";
+  el.innerHTML = `<div class="msg-text">${text}</div>`;
+  document.getElementById("tuneMessages").appendChild(el);
+  document.getElementById("tuneMessages").scrollTop = 99999;
+}
+function sendTuneMsg() {
+  const input = document.getElementById("tuneInput");
+  const text = input.value.trim();
+  if (!text || !currentTuneAgent) return;
+  addTuneMsg("user", text);
+  input.value = "";
+  setTimeout(() => {
+    const mem = agentMemories[currentTuneAgent.id];
+    let reply = `（${currentTuneAgent.name}）收到。`;
+    if (text.includes("更") || text.includes("调整") || text.includes("风格")) {
+      reply += " 我会按你的要求调整回答风格。已更新系统提示词。";
+      mem.prompt += "\n" + text;
+      document.getElementById("systemPrompt").value = mem.prompt;
+    } else if (mem.kb.length || mem.files.length) {
+      reply += ` 我已参考知识库中的 ${mem.kb.length} 个文件和 ${mem.files.length} 个上传文件来回答。`;
+    } else {
+      reply += " 请继续告诉我需要如何改进，或选择知识库文件 / 上传参考资料。";
+    }
+    addTuneMsg("agent", reply);
+  }, 600);
+}
+function saveTune() {
+  if (!currentTuneAgent) return;
+  const id = currentTuneAgent.id;
+  agentMemories[id].prompt = document.getElementById("systemPrompt").value;
+  agentMemories[id].kb = [...document.querySelectorAll("#kbList input:checked")].map(i => i.value);
+  addTuneMsg("system", "调教结果已保存。此智能体后续在流程中将使用最新配置。");
+  setTimeout(closeTune, 800);
+}
+let dragEl = null, dragClone = null, offsetX = 0, offsetY = 0;
+let isDragging = false;
+let startX = 0, startY = 0;
+const DRAG_THRESHOLD = 5;
+document.addEventListener("mousedown", e => {
+  const agent = e.target.closest(".agent");
+  if (!agent || agent.closest(".slot") || e.target.closest(".tune-btn")) return;
+  e.preventDefault();
+  dragEl = agent;
+  startX = e.clientX;
+  startY = e.clientY;
+  isDragging = false;
+  const rect = agent.getBoundingClientRect();
+  offsetX = e.clientX - rect.left;
+  offsetY = e.clientY - rect.top;
+});
+document.addEventListener("mousemove", e => {
+  if (!dragEl) return;
+  const dx = Math.abs(e.clientX - startX);
+  const dy = Math.abs(e.clientY - startY);
+  if (!isDragging && (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD)) {
+    isDragging = true;
+    dragClone = dragEl.cloneNode(true);
+    dragClone.classList.add("float-drag", "struggling");
+    dragClone.style.position = "fixed";
+    dragClone.style.left = (e.clientX - offsetX) + "px";
+    dragClone.style.top = (e.clientY - offsetY) + "px";
+    dragClone.style.width = dragEl.offsetWidth + "px";
+    dragClone.style.pointerEvents = "none";
+    document.body.appendChild(dragClone);
+    dragEl.style.opacity = "0.35";
+  }
+  if (isDragging && dragClone) {
+    dragClone.style.left = (e.clientX - offsetX) + "px";
+    dragClone.style.top = (e.clientY - offsetY) + "px";
+    document.querySelectorAll(".slot").forEach(s => s.classList.remove("hover"));
+    const slot = document.elementFromPoint(e.clientX, e.clientY)?.closest(".slot");
+    if (slot && !slot.querySelector(".agent")) slot.classList.add("hover");
+  }
+});
+document.addEventListener("mouseup", e => {
+  if (!dragEl) return;
+  if (isDragging && dragClone) {
+    const slot = document.elementFromPoint(e.clientX, e.clientY)?.closest(".slot");
+    if (slot && !slot.querySelector(".agent")) {
+      const placed = dragEl.cloneNode(true);
+      placed.classList.remove("float-drag", "struggling");
+      placed.style.opacity = "1";
+      placed.style.position = "";
+      const robot = placed.querySelector(".robot");
+      if (robot) { robot.style.width = "56px"; robot.style.height = "56px"; }
+      const title = placed.querySelector(".agent-title");
+      if (title) title.textContent = dragEl.dataset.name.split(" ")[0];
+      const skill = placed.querySelector(".agent-skill");
+      if (skill) skill.style.display = "none";
+      const btn = placed.querySelector(".tune-btn");
+      if (btn) btn.style.display = "none";
+      slot.appendChild(placed);
+      slot.classList.add("occupied");
+      dragEl.remove();
+      const info = AGENTS.find(a => a.id === dragEl.dataset.id);
+      if (info) {
+        const neu = document.createElement("div");
+        neu.className = "agent";
+        Object.assign(neu.dataset, { id: info.id, name: info.name, skill: info.skill, color: info.color });
+        neu.innerHTML = createRobotSVG(info.color, info.accent) +
+          `<div class="agent-title">${info.name}</div><div class="agent-skill">${info.skill}</div>
+           <button class="tune-btn" onclick="event.stopPropagation(); openTune('${info.id}')">调教</button>`;
+        pool.appendChild(neu);
+      }
+    } else {
+      dragEl.style.opacity = "1";
+    }
+    dragClone.remove();
+    dragClone = null;
+  } else {
+    if (dragEl) dragEl.style.opacity = "1";
+  }
+  document.querySelectorAll(".slot").forEach(s => s.classList.remove("hover"));
+  dragEl = null;
+  isDragging = false;
+  updateStartButtons();
+});
+function updateStartButtons() {
+  document.querySelectorAll(".process").forEach(proc => {
+    const filled = [...proc.querySelectorAll(".slot")].every(s => s.querySelector(".agent"));
+    proc.querySelector(".start-btn").disabled = !filled;
+  });
+}
+function getSlotAgents(proc) {
+  return [...proc.querySelectorAll(".slot")].map(slot => {
+    const agent = slot.querySelector(".agent");
+    return agent ? { role: slot.dataset.role, name: agent.dataset.name, skill: agent.dataset.skill, color: agent.dataset.color, id: agent.dataset.id, svg: agent.querySelector(".robot")?.outerHTML || "" } : null;
+  }).filter(Boolean);
+}
+function typeMessages(el, msgs, d = 1000) {
+  let i = 0;
+  function next() {
+    if (i >= msgs.length) return;
+    const m = msgs[i++];
+    const div = document.createElement("div");
+    div.className = "msg";
+    div.innerHTML = `<div class="msg-avatar">${m.svg}</div><div class="msg-body"><div class="msg-meta"><strong>${m.name}</strong> · ${m.skill}</div><div class="msg-text">${m.text}</div></div>`;
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+    setTimeout(next, d);
+  }
+  next();
+}
+const DIALOGUES = {
+  reflection: (ags) => {
+    const w = ags.find(a => a.role === "工作者") || ags[0];
+    const r = ags.find(a => a.role === "审核者") || ags[1];
+    return [
+      { ...w, text: "已完成方案初稿，请审核。" },
+      { ...r, text: `从${r.skill}看，预算偏高，建议压缩。` },
+      { ...w, text: "已调整，请确认。" },
+      { ...r, text: "审核通过。" }
+    ];
+  },
+  roleplay: (ags) => {
+    const p = ags.find(a => a.role === "规划者") || ags[0];
+    const e = ags.find(a => a.role === "执行者") || ags[1];
+    const r = ags.find(a => a.role === "审核者") || ags[2];
+    return [
+      { ...p, text: "目标已明确，请评估可行性。" },
+      { ...e, text: "技术可行，预计 12 人日。" },
+      { ...r, text: "建议补充验收标准。" },
+      { ...p, text: "已补充。" }
+    ];
+  }
+};
+document.querySelectorAll(".start-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const proc = btn.closest(".process");
+    const ags = getSlotAgents(proc);
+    if (!ags.length) return;
+    proc.querySelectorAll(".slot .agent").forEach(a => a.classList.add("working"));
+    proc.classList.add("expanded");
+    const m = proc.querySelector(".messages");
+    m.innerHTML = "";
+    proc.querySelector(".status").textContent = "协作已启动 · 智能体正在对话中...";
+    btn.textContent = "运行中";
+    btn.disabled = true;
+    typeMessages(m, DIALOGUES[proc.dataset.process](ags));
+  });
+});
+document.querySelectorAll(".reset-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const proc = btn.closest(".process");
+    proc.querySelectorAll(".slot .agent").forEach(a => a.remove());
+    proc.querySelectorAll(".slot").forEach(s => s.classList.remove("occupied"));
+    proc.classList.remove("expanded");
+    proc.querySelector(".messages").innerHTML = "";
+    proc.querySelector(".status").textContent = "";
+    const start = proc.querySelector(".start-btn");
+    start.textContent = "启动协作";
+    start.disabled = true;
+    updateStartButtons();
+  });
+});
 </script>
 </body>
 </html>
