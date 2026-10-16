@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能体流程编排 Demo · 调教增强版</title>
+<title>智能体组合应用 Demo · 调教增强版</title>
 <style>
 :root{--bg:#070b14;--panel:#0d1424;--border:#1e2a45;--glow:#00f0ff;--text:#e2e8f0;--muted:#94a3b8;--success:#34d399;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -72,15 +72,15 @@ textarea.prompt{width:100%;height:120px;background:#0a0f1c;border:1px solid var(
 <body>
 <div class="app">
 <div class="left">
-<h1>⚡ 智能体流程编排</h1>
-<p class="subtitle">拖拽智能体到坑位 → 启动协作对话；右侧每个智能体可单独「调教」</p>
+<h1>⚡ 智能体组合应用</h1>
+<p class="subtitle">拖拽智能体到坑位 → 用这个组合开始；右侧每个智能体可单独「调教」</p>
 <div class="process" data-process="reflection">
 <h3>反思流程</h3>
 <div class="slots">
 <div class="slot" data-role="工作者"><span class="slot-label">工作者</span></div>
 <div class="slot" data-role="审核者"><span class="slot-label">审核者</span></div>
 </div>
-<button class="start-btn" disabled>启动协作</button>
+<button class="start-btn" disabled>用这个组合开始</button>
 <button class="reset-btn">重置</button>
 <div class="status"></div>
 <div class="chat-window"><div class="chat-header">多智能体协作会话</div><div class="messages"></div></div>
@@ -92,7 +92,7 @@ textarea.prompt{width:100%;height:120px;background:#0a0f1c;border:1px solid var(
 <div class="slot" data-role="执行者"><span class="slot-label">执行者</span></div>
 <div class="slot" data-role="审核者"><span class="slot-label">审核者</span></div>
 </div>
-<button class="start-btn" disabled>启动协作</button>
+<button class="start-btn" disabled>用这个组合开始</button>
 <button class="reset-btn">重置</button>
 <div class="status"></div>
 <div class="chat-window"><div class="chat-header">多智能体协作会话</div><div class="messages"></div></div>
@@ -155,7 +155,7 @@ function getSlotAgents(proc){return [...proc.querySelectorAll(".slot")].map(slot
 function typeMessages(el,msgs,d=1000){let i=0;function n(){if(i>=msgs.length)return;const m=msgs[i++];const div=document.createElement("div");div.className="msg";div.innerHTML=`<div class="msg-avatar">${m.svg}</div><div class="msg-body"><div class="msg-meta"><strong>${m.name}</strong> · ${m.skill}</div><div class="msg-text">${m.text}</div></div>`;el.appendChild(div);el.scrollTop=el.scrollHeight;setTimeout(n,d);}n();}
 const DIALOGUES={reflection:(ags)=>{const w=ags.find(a=>a.role==="工作者")||ags[0],r=ags.find(a=>a.role==="审核者")||ags[1];return[{...w,text:"已完成方案初稿，请审核。"},{...r,text:"从审核视角看，预算偏高，建议压缩。"},{...w,text:"已调整，请确认。"},{...r,text:"审核通过。"}];},roleplay:(ags)=>{const p=ags.find(a=>a.role==="规划者")||ags[0],e=ags.find(a=>a.role==="执行者")||ags[1],r=ags.find(a=>a.role==="审核者")||ags[2];return[{...p,text:"目标已明确，请评估可行性。"},{...e,text:"技术可行，预计12人日。"},{...r,text:"建议补充验收标准。"},{...p,text:"已补充。"}];}};
 document.querySelectorAll(".start-btn").forEach(b=>b.addEventListener("click",()=>{const proc=b.closest(".process");const ags=getSlotAgents(proc);if(!ags.length)return;proc.querySelectorAll(".slot .agent").forEach(a=>a.classList.add("working"));proc.classList.add("expanded");const m=proc.querySelector(".messages");m.innerHTML="";proc.querySelector(".status").textContent="协作已启动";b.textContent="运行中";b.disabled=true;typeMessages(m,DIALOGUES[proc.dataset.process](ags));}));
-document.querySelectorAll(".reset-btn").forEach(b=>b.addEventListener("click",()=>{const proc=b.closest(".process");proc.querySelectorAll(".slot .agent").forEach(a=>a.remove());proc.querySelectorAll(".slot").forEach(s=>s.classList.remove("occupied"));proc.classList.remove("expanded");proc.querySelector(".messages").innerHTML="";proc.querySelector(".status").textContent="";const s=proc.querySelector(".start-btn");s.textContent="启动协作";s.disabled=true;updateStartButtons();}));
+document.querySelectorAll(".reset-btn").forEach(b=>b.addEventListener("click",()=>{const proc=b.closest(".process");proc.querySelectorAll(".slot .agent").forEach(a=>a.remove());proc.querySelectorAll(".slot").forEach(s=>s.classList.remove("occupied"));proc.classList.remove("expanded");proc.querySelector(".messages").innerHTML="";proc.querySelector(".status").textContent="";const s=proc.querySelector(".start-btn");s.textContent="用这个组合开始";s.disabled=true;updateStartButtons();}));
 </script>
 </body>
 </html>
